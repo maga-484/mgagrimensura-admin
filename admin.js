@@ -1,12 +1,11 @@
 // ============================================
-// PANEL DE ADMINISTRACIÓN
+// PANEL DE ADMINISTRACIÓN — JWT
 // ============================================
 const API_BASE = "https://mgagrimensura-backend-2.onrender.com/api";
 
-let apiKey = localStorage.getItem("admin_api_key") || "";
+let token = localStorage.getItem("token_jwt") || "";
 let parcelasCache = [];
 
-// DOM refs
 const $ = (id) => document.getElementById(id);
 
 // ============================================================
@@ -14,21 +13,45 @@ const $ = (id) => document.getElementById(id);
 // ============================================================
 
 function inicializarLogin() {
-  if (apiKey) {
+  if (token) {
     mostrarPanel();
     return;
   }
 
-  $("login-form").addEventListener("submit", (e) => {
+  $("login-form").addEventListener("submit", async (e) => {
     e.preventDefault();
-    const key = $("api-key-input").value.trim();
-    if (!key) return;
+    const usuario = $("login-usuario").value.trim();
+    const password = $("login-password").value.trim();
 
-    // Guardar y probar
-    apiKey = key;
-    localStorage.setItem("admin_api_key", apiKey);
-    mostrarPanel();
+    if (!usuario || !password) return;
+
+    try {
+      const res = await fetch(`${API_BASE}/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ usuario, password }),
+      });
+
+      const data = await res.json();
+
+      if (res.status === 200 && data.token) {
+        token = data.token;
+        localStorage.setItem("token_jwt", token);
+        $("login-error").classList.add("oculto");
+        mostrarPanel();
+      } else {
+        mostrarLoginError(data.mensaje || "Credenciales inválidas");
+      }
+    } catch (err) {
+      mostrarLoginError("Error de conexión con el servidor");
+    }
   });
+}
+
+function mostrarLoginError(texto) {
+  const el = $("login-error");
+  el.textContent = texto;
+  el.classList.remove("oculto");
 }
 
 function mostrarLogin() {
@@ -43,14 +66,21 @@ function mostrarPanel() {
 }
 
 $("btn-logout")?.addEventListener("click", () => {
-  apiKey = "";
-  localStorage.removeItem("admin_api_key");
+  token = "";
+  localStorage.removeItem("token_jwt");
   mostrarLogin();
 });
 
 // ============================================================
-// CARGAR PARCELAS
+// PETICIONES CON JWT
 // ============================================================
+
+function getAuthHeaders() {
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
+}
 
 async function cargarParcelas() {
   const tbody = $("tabla-body");
@@ -58,16 +88,14 @@ async function cargarParcelas() {
 
   try {
     const res = await fetch(`${API_BASE}/parcelas`, {
-      headers: { "x-api-key": apiKey },
+      headers: { Authorization: `Bearer ${token}` },
     });
 
     if (res.status === 401) {
-      mostrarMensaje("API Key inválida. Cerrando sesión.", "error");
-      setTimeout(() => {
-        apiKey = "";
-        localStorage.removeItem("admin_api_key");
-        mostrarLogin();
-      }, 2000);
+      mostrarMensaje("Sesión expirada. Volvé a iniciar sesión.", "error");
+      token = "";
+      localStorage.removeItem("token_jwt");
+      setTimeout(mostrarLogin, 2000);
       return;
     }
 
@@ -122,7 +150,6 @@ function renderizarTabla(parcelas) {
     )
     .join("");
 
-  // Bind eventos a los selects
   document.querySelectorAll(".select-estado").forEach((sel) => {
     sel.addEventListener("change", async (e) => {
       const id = e.target.dataset.id;
@@ -131,10 +158,6 @@ function renderizarTabla(parcelas) {
     });
   });
 }
-
-// ============================================================
-// FILTROS
-// ============================================================
 
 $("filtro-estado")?.addEventListener("change", () => {
   renderizarTabla(parcelasCache);
@@ -150,20 +173,15 @@ async function cambiarEstado(id, nuevoEstado, selectElement) {
   try {
     const res = await fetch(`${API_BASE}/parcelas/${id}`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ estado: nuevoEstado }),
     });
 
     if (res.status === 401) {
       mostrarMensaje("Sesión expirada. Volvé a iniciar sesión.", "error");
-      setTimeout(() => {
-        apiKey = "";
-        localStorage.removeItem("admin_api_key");
-        mostrarLogin();
-      }, 2000);
+      token = "";
+      localStorage.removeItem("token_jwt");
+      setTimeout(mostrarLogin, 2000);
       return;
     }
 
@@ -174,10 +192,9 @@ async function cambiarEstado(id, nuevoEstado, selectElement) {
 
     if (!res.ok) {
       const data = await res.json();
-      throw new Error(data.message || "Error al actualizar");
+      throw new Error(data.mensaje || "Error al actualizar");
     }
 
-    // Actualizar cache local
     const idx = parcelasCache.findIndex((p) => p.id == id);
     if (idx !== -1) parcelasCache[idx].estado = nuevoEstado;
 
@@ -185,7 +202,6 @@ async function cambiarEstado(id, nuevoEstado, selectElement) {
     renderizarTabla(parcelasCache);
   } catch (err) {
     mostrarMensaje(`❌ ${err.message}`, "error");
-    // Revertir select al valor anterior
     const parcela = parcelasCache.find((p) => p.id == id);
     if (parcela) selectElement.value = parcela.estado;
   } finally {

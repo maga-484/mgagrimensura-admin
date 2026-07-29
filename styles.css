@@ -269,3 +269,20 @@ body {
     padding: 0.5rem;
   }
 }
+/* Login form */
+#login-form .form-row {
+  margin-bottom: 0.75rem;
+}
+
+#login-form input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+#login-form input:focus {
+  outline: 2px solid #2563eb;
+  border-color: #2563eb;
+}

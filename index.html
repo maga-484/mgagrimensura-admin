@@ -12,15 +12,25 @@
       <section id="login-section" class="login-section">
         <div class="login-card">
           <h1>🔐 Panel de Administración</h1>
-          <p>Ingresá la API Key para acceder al sistema.</p>
+          <p>Ingresá tus credenciales para acceder.</p>
           <form id="login-form">
-            <input
-              type="password"
-              id="api-key-input"
-              placeholder="API Key"
-              required
-            />
-            <button type="submit" class="btn-primario">Acceder</button>
+            <div class="form-row">
+              <input
+                type="text"
+                id="login-usuario"
+                placeholder="Usuario"
+                required
+              />
+            </div>
+            <div class="form-row">
+              <input
+                type="password"
+                id="login-password"
+                placeholder="Contraseña"
+                required
+              />
+            </div>
+            <button type="submit" class="btn-primario">Iniciar sesión</button>
           </form>
           <div id="login-error" class="mensaje-error oculto"></div>
         </div>
