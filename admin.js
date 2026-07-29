@@ -1,7 +1,7 @@
 // ============================================
 // PANEL DE ADMINISTRACIÓN
 // ============================================
-const API_BASE = "https://mgagrimensura-backend-1.onrender.com/api";
+const API_BASE = "https://mgagrimensura-backend-2.onrender.com/api";
 
 let apiKey = localStorage.getItem("admin_api_key") || "";
 let parcelasCache = [];
