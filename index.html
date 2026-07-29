@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Panel de Administración — Agrimensura</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <!-- LOGIN -->
+      <section id="login-section" class="login-section">
+        <div class="login-card">
+          <h1>🔐 Panel de Administración</h1>
+          <p>Ingresá la API Key para acceder al sistema.</p>
+          <form id="login-form">
+            <input
+              type="password"
+              id="api-key-input"
+              placeholder="API Key"
+              required
+            />
+            <button type="submit" class="btn-primario">Acceder</button>
+          </form>
+          <div id="login-error" class="mensaje-error oculto"></div>
+        </div>
+      </section>
+
+      <!-- PANEL -->
+      <section id="panel-section" class="panel-section oculto">
+        <header class="panel-header">
+          <h1>📋 Gestión de Parcelas</h1>
+          <button id="btn-logout" class="btn-secundario">Cerrar sesión</button>
+        </header>
+
+        <div class="filtros">
+          <label for="filtro-estado">Filtrar por estado:</label>
+          <select id="filtro-estado">
+            <option value="todos">Todos</option>
+            <option value="recibido">Recibido</option>
+            <option value="en proceso">En proceso</option>
+            <option value="finalizado">Finalizado</option>
+          </select>
+          <button id="btn-refresh" class="btn-primario">🔄 Actualizar</button>
+        </div>
+
+        <div id="mensaje-global" class="mensaje-global oculto"></div>
+
+        <div class="tabla-container">
+          <table id="tabla-parcelas" class="tabla-parcelas">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Fecha</th>
+                <th>Cliente</th>
+                <th>Email</th>
+                <th>Área (ha)</th>
+                <th>Perímetro (m)</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-body">
+              <tr>
+                <td colspan="8" class="celda-vacia">Cargando...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <script src="admin.js"></script>
+  </body>
+</html>
