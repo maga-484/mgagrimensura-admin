@@ -54,3 +54,11 @@
     height: 300px;
   }
 }
+
+#mapa-parcela {
+  height: 400px !important;
+  min-height: 400px;
+  width: 100%;
+  display: block;
+  background: #e5e7eb;
+}

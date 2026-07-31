@@ -65,6 +65,11 @@ function mostrarPanel() {
   $("login-section").classList.add("oculto");
   $("panel-section").classList.remove("oculto");
   cargarParcelas();
+
+  // Inicializar mapa vacío después de que el DOM sea visible
+  setTimeout(() => {
+    inicializarMapa();
+  }, 100);
 }
 
 $("btn-logout")?.addEventListener("click", () => {
