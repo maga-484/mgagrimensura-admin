@@ -175,6 +175,55 @@ async function cargarParcelas() {
 
 $("btn-refresh")?.addEventListener("click", cargarParcelas);
 
+// Exportar GeoJSON
+$("btn-export")?.addEventListener("click", exportarGeoJSON);
+
+async function exportarGeoJSON() {
+  const btn = $("btn-export");
+  const estadoOriginal = btn.textContent;
+  btn.textContent = "⏳ Exportando...";
+  btn.disabled = true;
+
+  try {
+    const estado = $("filtro-estado").value;
+    const url =
+      estado === "todos"
+        ? `${API_BASE}/export/geojson`
+        : `${API_BASE}/export/geojson?estado=${encodeURIComponent(estado)}`;
+
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (res.status === 401) {
+      mostrarMensaje("Sesión expirada. Volvé a iniciar sesión.", "error");
+      token = "";
+      localStorage.removeItem("token_jwt");
+      setTimeout(mostrarLogin, 2000);
+      return;
+    }
+
+    if (!res.ok) throw new Error(`Error ${res.status}`);
+
+    const blob = await res.blob();
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = downloadUrl;
+    a.download = `parcelas_${new Date().toISOString().slice(0, 10)}.geojson`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(downloadUrl);
+
+    mostrarMensaje("✅ GeoJSON descargado correctamente", "exito");
+  } catch (err) {
+    mostrarMensaje(`❌ Error al exportar: ${err.message}`, "error");
+  } finally {
+    btn.textContent = estadoOriginal;
+    btn.disabled = false;
+  }
+}
+
 // ============================================================
 // RENDERIZAR TABLA
 // ============================================================
