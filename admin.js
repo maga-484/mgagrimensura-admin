@@ -1,10 +1,12 @@
 // ============================================
-// PANEL DE ADMINISTRACIÓN — JWT
+// PANEL DE ADMINISTRACIÓN — JWT + Leaflet
 // ============================================
 const API_BASE = "https://mgagrimensura-backend-2.onrender.com/api";
 
 let token = localStorage.getItem("token_jwt") || "";
 let parcelasCache = [];
+let mapa = null;
+let capaGeoJSON = null;
 
 const $ = (id) => document.getElementById(id);
 
@@ -42,7 +44,7 @@ function inicializarLogin() {
       } else {
         mostrarLoginError(data.mensaje || "Credenciales inválidas");
       }
-    } catch (err) {
+    } catch {
       mostrarLoginError("Error de conexión con el servidor");
     }
   });
@@ -68,19 +70,76 @@ function mostrarPanel() {
 $("btn-logout")?.addEventListener("click", () => {
   token = "";
   localStorage.removeItem("token_jwt");
+  if (mapa) {
+    mapa.remove();
+    mapa = null;
+    capaGeoJSON = null;
+  }
   mostrarLogin();
 });
 
 // ============================================================
-// PETICIONES CON JWT
+// MAPA LEAFLET
 // ============================================================
 
-function getAuthHeaders() {
-  return {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
-  };
+function inicializarMapa() {
+  if (mapa) return;
+  const container = $("mapa-parcela");
+  if (!container) return;
+
+  mapa = L.map("mapa-parcela").setView([-34.6, -58.5], 10);
+
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  }).addTo(mapa);
 }
+
+function mostrarParcelaEnMapa(geojson) {
+  inicializarMapa();
+
+  const mensajeEl = $("mapa-mensaje");
+  mensajeEl.classList.add("oculto");
+
+  // Limpiar capa anterior
+  if (capaGeoJSON) {
+    mapa.removeLayer(capaGeoJSON);
+    capaGeoJSON = null;
+  }
+
+  // Validar geoJSON
+  if (
+    !geojson ||
+    !geojson.type ||
+    !geojson.coordinates ||
+    geojson.coordinates.length === 0
+  ) {
+    mensajeEl.textContent = "Esta parcela no tiene geometría disponible.";
+    mensajeEl.classList.remove("oculto");
+    mapa.setView([-34.6, -58.5], 10);
+    return;
+  }
+
+  // Dibujar polígono
+  capaGeoJSON = L.geoJSON(geojson, {
+    style: {
+      color: "#2563eb",
+      weight: 3,
+      fillColor: "#3b82f6",
+      fillOpacity: 0.25,
+    },
+  }).addTo(mapa);
+
+  // Ajustar vista
+  const bounds = capaGeoJSON.getBounds();
+  if (bounds.isValid()) {
+    mapa.fitBounds(bounds, { padding: [30, 30], maxZoom: 18 });
+  }
+}
+
+// ============================================================
+// PETICIONES CON JWT
+// ============================================================
 
 async function cargarParcelas() {
   const tbody = $("tabla-body");
@@ -130,7 +189,7 @@ function renderizarTabla(parcelas) {
   tbody.innerHTML = filtradas
     .map(
       (p) => `
-    <tr>
+    <tr class="fila-parcela" data-id="${p.id}">
       <td>${p.id}</td>
       <td>${formatearFecha(p.fechaCreacion)}</td>
       <td>${escaparHTML(p.clienteNombre)}</td>
@@ -150,6 +209,21 @@ function renderizarTabla(parcelas) {
     )
     .join("");
 
+  // Click en fila → mostrar en mapa
+  document.querySelectorAll(".fila-parcela").forEach((fila) => {
+    fila.addEventListener("click", (e) => {
+      // Ignorar si el click fue en el select
+      if (e.target.tagName === "SELECT") return;
+
+      const id = parseInt(fila.dataset.id, 10);
+      const parcela = parcelasCache.find((p) => p.id === id);
+      if (parcela) {
+        mostrarParcelaEnMapa(parcela.geoJSON || null);
+      }
+    });
+  });
+
+  // Cambio de estado
   document.querySelectorAll(".select-estado").forEach((sel) => {
     sel.addEventListener("change", async (e) => {
       const id = e.target.dataset.id;
@@ -173,7 +247,10 @@ async function cambiarEstado(id, nuevoEstado, selectElement) {
   try {
     const res = await fetch(`${API_BASE}/parcelas/${id}`, {
       method: "PUT",
-      headers: getAuthHeaders(),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify({ estado: nuevoEstado }),
     });
 

@@ -1,288 +1,56 @@
 /* ============================================
-   RESET Y BASE
+   MAPA LEAFLET
    ============================================ */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-body {
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
-    Cantarell, sans-serif;
-  background: #f3f4f6;
-  color: #1f2937;
-  line-height: 1.5;
-}
-
-.oculto {
-  display: none !important;
-}
-
-/* ============================================
-   LOGIN
-   ============================================ */
-.login-section {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-}
-
-.login-card {
-  background: white;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  width: 100%;
-  max-width: 400px;
-  text-align: center;
-}
-
-.login-card h1 {
-  font-size: 1.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.login-card p {
-  color: #6b7280;
-  margin-bottom: 1.5rem;
-}
-
-.login-card input {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 1rem;
-  margin-bottom: 1rem;
-}
-
-.login-card input:focus {
-  outline: 2px solid #2563eb;
-  border-color: #2563eb;
-}
-
-/* ============================================
-   BOTONES
-   ============================================ */
-.btn-primario,
-.btn-secundario {
-  padding: 0.6rem 1.2rem;
-  border: none;
-  border-radius: 6px;
-  font-size: 0.95rem;
-  cursor: pointer;
-  transition: opacity 0.2s;
-}
-
-.btn-primario {
-  background: #2563eb;
-  color: white;
-}
-
-.btn-primario:hover {
-  opacity: 0.9;
-}
-
-.btn-secundario {
-  background: #e5e7eb;
-  color: #374151;
-}
-
-.btn-secundario:hover {
-  background: #d1d5db;
-}
-
-/* ============================================
-   PANEL
-   ============================================ */
-.panel-section {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 1.5rem;
-}
-
-.panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.panel-header h1 {
-  font-size: 1.5rem;
-}
-
-/* ============================================
-   FILTROS
-   ============================================ */
-.filtros {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
-  flex-wrap: wrap;
-}
-
-.filtros label {
-  font-weight: 600;
-}
-
-.filtros select {
-  padding: 0.5rem;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 0.95rem;
-}
-
-/* ============================================
-   MENSAJES
-   ============================================ */
-.mensaje-global {
-  padding: 0.75rem 1rem;
-  border-radius: 6px;
-  margin-bottom: 1rem;
-  font-size: 0.95rem;
-}
-
-.msg-exito {
-  background: #d1fae5;
-  color: #065f46;
-  border: 1px solid #a7f3d0;
-}
-
-.msg-error {
-  background: #fee2e2;
-  color: #991b1b;
-  border: 1px solid #fecaca;
-}
-
-.mensaje-error {
-  color: #dc2626;
-  font-size: 0.9rem;
-  margin-top: 0.5rem;
-}
-
-/* ============================================
-   TABLA
-   ============================================ */
-.tabla-container {
+.mapa-wrapper {
+  margin-top: 1.5rem;
   background: white;
   border-radius: 8px;
+  padding: 1rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  overflow-x: auto;
 }
 
-.tabla-parcelas {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9rem;
+.mapa-wrapper h3 {
+  margin-bottom: 0.25rem;
+  font-size: 1.1rem;
 }
 
-.tabla-parcelas th,
-.tabla-parcelas td {
-  padding: 0.75rem 1rem;
-  text-align: left;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.tabla-parcelas th {
-  background: #f9fafb;
-  font-weight: 600;
-  color: #374151;
-  white-space: nowrap;
-}
-
-.tabla-parcelas tr:hover {
-  background: #f9fafb;
-}
-
-.celda-vacia {
-  text-align: center;
-  color: #9ca3af;
-  padding: 2rem;
-}
-
-/* ============================================
-   BADGES
-   ============================================ */
-.badge {
-  display: inline-block;
-  padding: 0.25rem 0.6rem;
-  border-radius: 9999px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.badge-recibido {
-  background: #dbeafe;
-  color: #1e40af;
-}
-
-.badge-en-proceso {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.badge-finalizado {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-/* ============================================
-   SELECT ESTADO
-   ============================================ */
-.select-estado {
-  padding: 0.4rem;
-  border: 1px solid #d1d5db;
-  border-radius: 4px;
+.mapa-hint {
+  color: #6b7280;
   font-size: 0.85rem;
-  cursor: pointer;
-}
-
-.select-estado:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* ============================================
-   RESPONSIVE
-   ============================================ */
-@media (max-width: 768px) {
-  .panel-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .tabla-parcelas {
-    font-size: 0.8rem;
-  }
-
-  .tabla-parcelas th,
-  .tabla-parcelas td {
-    padding: 0.5rem;
-  }
-}
-/* Login form */
-#login-form .form-row {
   margin-bottom: 0.75rem;
 }
 
-#login-form input {
+#mapa-parcela {
+  height: 400px;
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #d1d5db;
   border-radius: 6px;
-  font-size: 1rem;
+  border: 1px solid #e5e7eb;
+  background: #f3f4f6;
 }
 
-#login-form input:focus {
-  outline: 2px solid #2563eb;
-  border-color: #2563eb;
+.mapa-mensaje {
+  padding: 1rem;
+  text-align: center;
+  color: #991b1b;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  margin-top: 0.5rem;
+}
+
+/* Filas clickeables */
+.fila-parcela {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.fila-parcela:hover {
+  background: #eff6ff !important;
+}
+
+/* Responsive mapa */
+@media (max-width: 768px) {
+  #mapa-parcela {
+    height: 300px;
+  }
 }
