@@ -293,9 +293,15 @@ $("filtro-estado")?.addEventListener("change", () => {
 // CAMBIAR ESTADO
 // ============================================================
 
-function iniciarParcela(id, btn) { cambiarEstado(id, "en proceso", btn); }
-function finalizarParcela(id, btn) { cambiarEstado(id, "finalizado", btn); }
-function reabrirParcela(id, btn) { cambiarEstado(id, "en proceso", btn); }
+function iniciarParcela(id, btn) {
+  cambiarEstado(id, "en proceso", btn);
+}
+function finalizarParcela(id, btn) {
+  cambiarEstado(id, "finalizado", btn);
+}
+function reabrirParcela(id, btn) {
+  cambiarEstado(id, "en proceso", btn);
+}
 
 async function cambiarEstado(id, nuevoEstado, triggerElement) {
   if (triggerElement) triggerElement.disabled = true;
@@ -379,17 +385,20 @@ async function enviarNotificacion() {
   btn.textContent = "Enviando...";
 
   try {
-    const res = await fetch(`${API_BASE}/parcelas/${notificarIdActual}/notificar`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+    const res = await fetch(
+      `${API_BASE}/parcelas/${notificarIdActual}/notificar`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          asunto: $("notif-asunto").value,
+          mensaje: $("notif-mensaje").value,
+        }),
       },
-      body: JSON.stringify({
-        asunto: $("notif-asunto").value,
-        mensaje: $("notif-mensaje").value,
-      }),
-    });
+    );
 
     if (res.status === 401) {
       mostrarMensaje("Sesión expirada. Volvé a iniciar sesión.", "error");
@@ -400,7 +409,8 @@ async function enviarNotificacion() {
     }
 
     const data = await res.json();
-    if (!res.ok) throw new Error(data.message || "Error al enviar notificación");
+    if (!res.ok)
+      throw new Error(data.message || "Error al enviar notificación");
 
     mostrarMensaje("✅ Notificación enviada correctamente", "exito");
     cerrarModalNotificar();
@@ -416,4 +426,38 @@ async function enviarNotificacion() {
 // UTILIDADES
 // ============================================================
 
-function form
+function formatearFecha(iso) {
+  if (!iso) return "-";
+  const d = new Date(iso);
+  return d.toLocaleString("es-AR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function escaparHTML(str) {
+  if (!str) return "";
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function mostrarMensaje(texto, tipo) {
+  const el = $("mensaje-global");
+  el.textContent = texto;
+  el.className =
+    "mensaje-global " + (tipo === "exito" ? "msg-exito" : "msg-error");
+  el.classList.remove("oculto");
+  setTimeout(() => el.classList.add("oculto"), 4000);
+}
+
+// ============================================================
+// ARRANQUE
+// ============================================================
+
+inicializarLogin();
