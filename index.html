@@ -53,7 +53,7 @@
           <label for="filtro-estado">Filtrar por estado:</label>
           <select id="filtro-estado">
             <option value="todos">Todos</option>
-            <option value="recibido">Recibido</option>
+            <option value="nueva">Nueva</option>
             <option value="en proceso">En proceso</option>
             <option value="finalizado">Finalizado</option>
           </select>
@@ -96,6 +96,21 @@
           <div id="mapa-mensaje" class="mapa-mensaje oculto"></div>
         </div>
       </section>
+    </div>
+
+    <!-- MODAL NOTIFICAR -->
+    <div id="modal-notificar" class="modal-overlay oculto">
+      <div class="modal-contenido">
+        <h3>📧 Notificar al cliente</h3>
+        <label>Asunto</label>
+        <input type="text" id="notif-asunto" />
+        <label>Mensaje</label>
+        <textarea id="notif-mensaje"></textarea>
+        <div class="modal-botones">
+          <button class="btn-cancelar" onclick="cerrarModalNotificar()">Cancelar</button>
+          <button class="btn-primario" onclick="enviarNotificacion()">Enviar</button>
+        </div>
+      </div>
     </div>
 
     <script

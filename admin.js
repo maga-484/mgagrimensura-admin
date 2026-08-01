@@ -7,6 +7,7 @@ let token = localStorage.getItem("token_jwt") || "";
 let parcelasCache = [];
 let mapa = null;
 let capaGeoJSON = null;
+let notificarIdActual = null;
 
 const $ = (id) => document.getElementById(id);
 
@@ -66,7 +67,6 @@ function mostrarPanel() {
   $("panel-section").classList.remove("oculto");
   cargarParcelas();
 
-  // Inicializar mapa vacío después de que el DOM sea visible
   setTimeout(() => {
     inicializarMapa();
   }, 100);
@@ -106,13 +106,11 @@ function mostrarParcelaEnMapa(geojson) {
   const mensajeEl = $("mapa-mensaje");
   mensajeEl.classList.add("oculto");
 
-  // Limpiar capa anterior
   if (capaGeoJSON) {
     mapa.removeLayer(capaGeoJSON);
     capaGeoJSON = null;
   }
 
-  // Validar geoJSON
   if (
     !geojson ||
     !geojson.type ||
@@ -125,7 +123,6 @@ function mostrarParcelaEnMapa(geojson) {
     return;
   }
 
-  // Dibujar polígono
   capaGeoJSON = L.geoJSON(geojson, {
     style: {
       color: "#2563eb",
@@ -135,7 +132,6 @@ function mostrarParcelaEnMapa(geojson) {
     },
   }).addTo(mapa);
 
-  // Ajustar vista
   const bounds = capaGeoJSON.getBounds();
   if (bounds.isValid()) {
     mapa.fitBounds(bounds, { padding: [30, 30], maxZoom: 18 });
@@ -251,13 +247,7 @@ function renderizarTabla(parcelas) {
       <td>${(p.areaM2 / 10000).toFixed(4)}</td>
       <td>${p.perimetroM.toLocaleString("es-AR", { maximumFractionDigits: 2 })}</td>
       <td><span class="badge badge-${p.estado.replace(/\s/g, "-")}">${p.estado}</span></td>
-      <td>
-        <select class="select-estado" data-id="${p.id}">
-          <option value="recibido" ${p.estado === "recibido" ? "selected" : ""}>Recibido</option>
-          <option value="en proceso" ${p.estado === "en proceso" ? "selected" : ""}>En proceso</option>
-          <option value="finalizado" ${p.estado === "finalizado" ? "selected" : ""}>Finalizado</option>
-        </select>
-      </td>
+      <td class="acciones-celda">${renderizarBotonesAccion(p)}</td>
     </tr>
   `,
     )
@@ -266,9 +256,7 @@ function renderizarTabla(parcelas) {
   // Click en fila → mostrar en mapa
   document.querySelectorAll(".fila-parcela").forEach((fila) => {
     fila.addEventListener("click", (e) => {
-      // Ignorar si el click fue en el select
-      if (e.target.tagName === "SELECT") return;
-
+      if (e.target.tagName === "BUTTON") return;
       const id = parseInt(fila.dataset.id, 10);
       const parcela = parcelasCache.find((p) => p.id === id);
       if (parcela) {
@@ -276,15 +264,25 @@ function renderizarTabla(parcelas) {
       }
     });
   });
+}
 
-  // Cambio de estado
-  document.querySelectorAll(".select-estado").forEach((sel) => {
-    sel.addEventListener("change", async (e) => {
-      const id = e.target.dataset.id;
-      const nuevoEstado = e.target.value;
-      await cambiarEstado(id, nuevoEstado, e.target);
-    });
-  });
+function renderizarBotonesAccion(p) {
+  if (p.estado === "nueva") {
+    return `<button class="btn-primario" onclick="iniciarParcela(${p.id}, this)">Empezar</button>`;
+  }
+  if (p.estado === "en proceso") {
+    return `
+      <button class="btn-exito" onclick="finalizarParcela(${p.id}, this)">Finalizar</button>
+      <button class="btn-info" onclick="abrirModalNotificar(${p.id})">Notificar</button>
+    `;
+  }
+  if (p.estado === "finalizado") {
+    return `
+      <button class="btn-advertencia" onclick="reabrirParcela(${p.id}, this)">Reabrir</button>
+      <button class="btn-info" onclick="abrirModalNotificar(${p.id})">Notificar</button>
+    `;
+  }
+  return "";
 }
 
 $("filtro-estado")?.addEventListener("change", () => {
@@ -295,8 +293,12 @@ $("filtro-estado")?.addEventListener("change", () => {
 // CAMBIAR ESTADO
 // ============================================================
 
-async function cambiarEstado(id, nuevoEstado, selectElement) {
-  selectElement.disabled = true;
+function iniciarParcela(id, btn) { cambiarEstado(id, "en proceso", btn); }
+function finalizarParcela(id, btn) { cambiarEstado(id, "finalizado", btn); }
+function reabrirParcela(id, btn) { cambiarEstado(id, "en proceso", btn); }
+
+async function cambiarEstado(id, nuevoEstado, triggerElement) {
+  if (triggerElement) triggerElement.disabled = true;
 
   try {
     const res = await fetch(`${API_BASE}/parcelas/${id}`, {
@@ -333,10 +335,80 @@ async function cambiarEstado(id, nuevoEstado, selectElement) {
     renderizarTabla(parcelasCache);
   } catch (err) {
     mostrarMensaje(`❌ ${err.message}`, "error");
-    const parcela = parcelasCache.find((p) => p.id == id);
-    if (parcela) selectElement.value = parcela.estado;
+    await cargarParcelas();
   } finally {
-    selectElement.disabled = false;
+    if (triggerElement) triggerElement.disabled = false;
+  }
+}
+
+// ============================================================
+// MODAL NOTIFICAR
+// ============================================================
+
+function abrirModalNotificar(id) {
+  notificarIdActual = id;
+  const parcela = parcelasCache.find((p) => p.id === id);
+  const nombre = parcela?.clienteNombre || "cliente";
+  const estado = parcela?.estado || "";
+
+  const template = `Estimado ${nombre}:
+
+Le informamos que el análisis de su parcela ha sido actualizado.
+
+Estado actual: ${estado}.
+
+Ante cualquier consulta, no dude en contactarnos.
+
+Saludos cordiales.`;
+
+  $("notif-asunto").value = `Actualización de su parcela — ID #${id}`;
+  $("notif-mensaje").value = template;
+  $("modal-notificar").classList.remove("oculto");
+}
+
+function cerrarModalNotificar() {
+  $("modal-notificar").classList.add("oculto");
+  notificarIdActual = null;
+}
+
+async function enviarNotificacion() {
+  if (!notificarIdActual) return;
+
+  const btn = document.querySelector("#modal-notificar .btn-primario");
+  btn.disabled = true;
+  btn.textContent = "Enviando...";
+
+  try {
+    const res = await fetch(`${API_BASE}/parcelas/${notificarIdActual}/notificar`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        asunto: $("notif-asunto").value,
+        mensaje: $("notif-mensaje").value,
+      }),
+    });
+
+    if (res.status === 401) {
+      mostrarMensaje("Sesión expirada. Volvé a iniciar sesión.", "error");
+      token = "";
+      localStorage.removeItem("token_jwt");
+      setTimeout(mostrarLogin, 2000);
+      return;
+    }
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Error al enviar notificación");
+
+    mostrarMensaje("✅ Notificación enviada correctamente", "exito");
+    cerrarModalNotificar();
+  } catch (err) {
+    mostrarMensaje(`❌ ${err.message}`, "error");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Enviar";
   }
 }
 
@@ -344,38 +416,4 @@ async function cambiarEstado(id, nuevoEstado, selectElement) {
 // UTILIDADES
 // ============================================================
 
-function formatearFecha(iso) {
-  if (!iso) return "-";
-  const d = new Date(iso);
-  return d.toLocaleString("es-AR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function escaparHTML(str) {
-  if (!str) return "";
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
-function mostrarMensaje(texto, tipo) {
-  const el = $("mensaje-global");
-  el.textContent = texto;
-  el.className =
-    "mensaje-global " + (tipo === "exito" ? "msg-exito" : "msg-error");
-  el.classList.remove("oculto");
-  setTimeout(() => el.classList.add("oculto"), 4000);
-}
-
-// ============================================================
-// ARRANQUE
-// ============================================================
-
-inicializarLogin();
+function form
